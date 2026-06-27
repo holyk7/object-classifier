@@ -1,5 +1,6 @@
 // api/classify.js
 // Serverless function — runs on the server, keeps the API key hidden from the browser.
+// Uses Groq's free API with a vision-capable Llama model.
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,34 +14,26 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No image data provided.' });
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey) {
       return res.status(500).json({ error: 'Server misconfigured: missing API key.' });
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const dataUrl = `data:${mediaType || 'image/jpeg'};base64,${imageBase64}`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         messages: [
           {
             role: 'user',
             content: [
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: mediaType || 'image/jpeg',
-                  data: imageBase64
-                }
-              },
               {
                 type: 'text',
                 text: `You are an image classifier trained using transfer learning on MobileNetV2. Analyse this image and identify the main everyday object(s) in it.
@@ -57,10 +50,15 @@ Respond ONLY with a JSON object in this exact format (no markdown, no backticks,
   ],
   "description": "2-3 sentences describing what you see, any notable features, and context about the object in everyday Nigerian life or usage."
 }`
+              },
+              {
+                type: 'image_url',
+                image_url: { url: dataUrl }
               }
             ]
           }
-        ]
+        ],
+        temperature: 0.4
       })
     });
 
@@ -72,7 +70,7 @@ Respond ONLY with a JSON object in this exact format (no markdown, no backticks,
     }
 
     const data = await response.json();
-    const text = data.content.map((b) => b.text || '').join('');
+    const text = data.choices?.[0]?.message?.content || '';
     const clean = text.replace(/```json|```/g, '').trim();
 
     let result;
