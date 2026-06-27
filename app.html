@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lens — Classify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --paper: #FAF8F4;
+    --ink: #1C1B1A;
+    --sienna: #C75D3D;
+    --sienna-deep: #A8472E;
+    --slate: #6B7280;
+    --border: #E8E2D5;
+    --card: #FFFFFF;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--paper);
+  }
+
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark { width: 26px; height: 26px; position: relative; }
+  .brand-mark::before, .brand-mark::after {
+    content: ''; position: absolute; border: 2px solid var(--ink);
+  }
+  .brand-mark::before { width: 10px; height: 10px; top: 0; left: 0; border-right: none; border-bottom: none; }
+  .brand-mark::after { width: 10px; height: 10px; bottom: 0; right: 0; border-left: none; border-top: none; }
+  .brand span { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; }
+
+  .nav-right { display: flex; align-items: center; gap: 1.25rem; }
+
+  .user-pill {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13.5px; color: var(--slate);
+  }
+  .user-pill .avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--sienna); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif;
+  }
+
+  .btn-logout {
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--ink);
+    padding: 7px 16px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.15s;
+  }
+  .btn-logout:hover { border-color: var(--sienna); color: var(--sienna-deep); }
+
+  /* ===== LAYOUT ===== */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 2.5rem;
+    padding: 2.5rem;
+  }
+
+  .main-col { min-width: 0; }
+
+  .page-head { margin-bottom: 1.75rem; }
+  .page-head .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--sienna-deep);
+    margin-bottom: 6px;
+  }
+  .page-head h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 28px; font-weight: 500; letter-spacing: -0.01em;
+  }
+
+  /* ===== UPLOAD ZONE ===== */
+  .upload-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: 4px;
+    background: var(--card);
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--sienna);
+    background: #FDF8F4;
+  }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
+  }
+
+  .upload-icon-frame {
+    width: 52px; height: 52px;
+    margin: 0 auto 1.1rem;
+    position: relative;
+  }
+  .upload-icon-frame .corner {
+    position: absolute; width: 16px; height: 16px;
+    border: 2px solid var(--sienna);
+  }
+  .upload-icon-frame .corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+  .upload-icon-frame .corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+  .upload-icon-frame .corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+  .upload-icon-frame .corner.br { bottom: 0; right: 0; border-left: none; border-top: none; }
+  .upload-icon-frame .center-icon {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+  }
+
+  .upload-zone h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 17px; font-weight: 500; margin-bottom: 4px;
+  }
+  .upload-zone p { font-size: 13px; color: var(--slate); }
+
+  .formats { margin-top: 14px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .tag {
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: 3px; padding: 3px 9px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px; color: var(--slate);
+  }
+
+  /* ===== PREVIEW ===== */
+  .preview-area { display: none; margin-top: 1.5rem; }
+  .preview-area.visible { display: block; }
+
+  .preview-card {
+    border: 1px solid var(--border); border-radius: 4px;
+    background: var(--card); overflow: hidden;
+  }
+
+  .preview-img-wrap {
+    position: relative; background: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    min-height: 220px; max-height: 360px; overflow: hidden;
+  }
+  .preview-img-wrap img { max-width: 100%; max-height: 360px; object-fit: contain; display: block; }
+
+  .vf-corner { position: absolute; width: 24px; height: 24px; border: 2px solid var(--sienna); opacity: 0.8; }
+  .vf-corner.tl { top: 14px; left: 14px; border-right: none; border-bottom: none; }
+  .vf-corner.tr { top: 14px; right: 14px; border-left: none; border-bottom: none; }
+  .vf-corner.bl { bottom: 14px; left: 14px; border-right: none; border-top: none; }
+  .vf-corner.br { bottom: 14px; right: 14px; border-left: none; border-top: none; }
+
+  .preview-controls {
+    padding: 1rem 1.25rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid var(--border); gap: 1rem;
+  }
+
+  .img-name {
+    font-size: 13px; color: var(--slate);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .btn-row { display: flex; gap: 8px; }
+
+  .btn {
+    padding: 9px 18px; border-radius: 3px; border: 1.5px solid var(--border);
+    background: var(--paper); color: var(--ink);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn:hover { border-color: var(--ink); }
+
+  .btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .btn.primary:hover { background: var(--sienna-deep); border-color: var(--sienna-deep); }
+  .btn.primary:disabled { background: #BFBAAE; border-color: #BFBAAE; cursor: not-allowed; }
+
+  .btn.danger { background: transparent; border-color: var(--border); color: var(--sienna-deep); }
+  .btn.danger:hover { border-color: var(--sienna); }
+
+  /* ===== RESULTS ===== */
+  .results-area { display: none; margin-top: 1.5rem; }
+  .results-area.visible { display: block; }
+
+  .result-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+
+  .result-header {
+    padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .result-header .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--sienna); flex-shrink: 0; }
+  .result-header h4 { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500; flex: 1; }
+  .model-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--slate);
+    background: var(--paper); padding: 3px 9px; border-radius: 3px; border: 1px solid var(--border);
+  }
+
+  .primary-result { padding: 1.75rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1.1rem; }
+  .object-icon {
+    width: 58px; height: 58px; border-radius: 4px;
+    background: #FDF1EE; border: 1px solid #E8B4A4;
+    display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0;
+  }
+  .object-info h3 { font-family: 'Fraunces', serif; font-size: 23px; font-weight: 600; text-transform: capitalize; }
+  .object-info p { font-size: 13px; color: var(--slate); margin-top: 2px; }
+  .confidence-pill {
+    margin-left: auto; font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 600; color: var(--sienna-deep);
+    background: #FDF1EE; border: 1px solid #E8B4A4; padding: 6px 14px; border-radius: 20px;
+  }
+
+  .top-predictions { padding: 1.1rem 1.25rem; }
+  .top-predictions h5 {
+    font-size: 11.5px; font-weight: 600; color: var(--slate);
+    text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px;
+  }
+  .pred-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .pred-label { font-size: 13px; color: var(--ink); width: 140px; flex-shrink: 0; text-transform: capitalize; }
+  .pred-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .pred-bar { height: 100%; background: var(--sienna); border-radius: 4px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+  .pred-pct { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--slate); width: 38px; text-align: right; flex-shrink: 0; }
+
+  .description-section { border-top: 1px solid var(--border); padding: 1.25rem; }
+  .description-section h5 {
+    font-size: 11.5px; font-weight: 600; color: var(--slate);
+    text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px;
+  }
+  .description-section p { font-size: 14px; color: #3A3836; line-height: 1.7; }
+
+  .loading-overlay { display: none; padding: 2.75rem 1.25rem; text-align: center; }
+  .loading-overlay.visible { display: block; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border);
+    border-top-color: var(--sienna); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-overlay p { font-size: 14px; color: var(--slate); }
+  .loading-overlay .step { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #B5AFA0; margin-top: 4px; }
+
+  .error-box {
+    display: none; background: #FDF1EE; border: 1px solid #E8B4A4; border-radius: 4px;
+    padding: 1rem 1.25rem; margin-top: 1rem; font-size: 14px; color: var(--sienna-deep);
+  }
+  .error-box.visible { display: block; }
+
+  /* ===== SIDEBAR: HISTORY ===== */
+  .sidebar {
+    border-left: 1px solid var(--border);
+    padding-left: 2.5rem;
+  }
+
+  .sidebar h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 16px; font-weight: 500; margin-bottom: 1rem;
+  }
+
+  .history-empty {
+    font-size: 13px; color: var(--slate); line-height: 1.6;
+    padding: 1rem 0;
+  }
+
+  .history-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    cursor: default;
+  }
+  .history-item .h-icon {
+    width: 34px; height: 34px; border-radius: 3px;
+    background: #FDF1EE; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .history-item .h-text { flex: 1; min-width: 0; }
+  .history-item .h-label { font-size: 13px; font-weight: 600; text-transform: capitalize; }
+  .history-item .h-time { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--slate); margin-top: 2px; }
+  .history-item .h-conf { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--sienna-deep); flex-shrink: 0; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; padding: 1.5rem; }
+    .sidebar { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 2rem; }
+    nav { padding: 1rem 1.5rem; }
+    .user-pill span.label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="brand" style="text-decoration:none; color:var(--ink);">
+    <div class="brand-mark"></div>
+    <span>Lens</span>
+  </a>
+  <div class="nav-right">
+    <div class="user-pill">
+      <div class="avatar" id="userAvatar">?</div>
+      <span class="label" id="userName">Loading...</span>
+    </div>
+    <button class="btn-logout" id="logoutBtn">Sign out</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <div class="main-col">
+    <div class="page-head">
+      <div class="eyebrow">CLASSIFIER</div>
+      <h1>What are you looking at?</h1>
+    </div>
+
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="upload-icon-frame">
+        <div class="corner tl"></div><div class="corner tr"></div>
+        <div class="corner bl"></div><div class="corner br"></div>
+        <div class="center-icon">📷</div>
+      </div>
+      <h3>Drop an image here or click to browse</h3>
+      <p>Supports bottles, cups, phones, bags, books, chairs, keys, and more</p>
+      <div class="formats">
+        <span class="tag">JPG</span><span class="tag">PNG</span><span class="tag">WEBP</span><span class="tag">GIF</span>
+      </div>
+    </div>
+
+    <div class="preview-area" id="previewArea">
+      <div class="preview-card">
+        <div class="preview-img-wrap">
+          <div class="vf-corner tl"></div><div class="vf-corner tr"></div>
+          <div class="vf-corner bl"></div><div class="vf-corner br"></div>
+          <img id="previewImg" src="" alt="Preview">
+        </div>
+        <div class="preview-controls">
+          <span class="img-name" id="imgName">image.jpg</span>
+          <div class="btn-row">
+            <button class="btn danger" id="clearBtn">Clear</button>
+            <button class="btn primary" id="analyzeBtn">Analyse image</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="results-area" id="resultsArea">
+      <div class="result-card">
+        <div id="loadingOverlay" class="loading-overlay visible">
+          <div class="spinner"></div>
+          <p>Analysing image...</p>
+          <div class="step" id="loadingStep">Sending to classifier</div>
+        </div>
+
+        <div id="resultContent" style="display:none;">
+          <div class="result-header">
+            <div class="status-dot"></div>
+            <h4>Classification result</h4>
+            <span class="model-tag">MobileNetV2 · Transfer Learning</span>
+          </div>
+
+          <div class="primary-result">
+            <div class="object-icon" id="objectIcon">📦</div>
+            <div class="object-info">
+              <h3 id="topLabel">Object</h3>
+              <p id="topCategory">Everyday object detected</p>
+            </div>
+            <div class="confidence-pill" id="topConfidence">—%</div>
+          </div>
+
+          <div class="top-predictions" id="predictionsContainer"></div>
+
+          <div class="description-section">
+            <h5>Analysis</h5>
+            <p id="descriptionText">—</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <h2>Recent activity</h2>
+    <div id="historyList">
+      <div class="history-empty">Your classification history will appear here once you analyse your first image.</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentUser = null;
+
+const EMOJIS = {
+  bottle: '🍶', cup: '☕', mug: '☕', phone: '📱', mobile: '📱', smartphone: '📱',
+  chair: '🪑', bag: '👜', backpack: '🎒', book: '📖', keys: '🔑', key: '🔑',
+  bowl: '🥣', shoe: '👟', sneaker: '👟', pen: '✏️', pencil: '✏️', plate: '🍽️',
+  laptop: '💻', computer: '💻', table: '🪵', desk: '🪵', clock: '🕐', watch: '⌚',
+  glasses: '👓', headphones: '🎧', remote: '📺', fan: '💨', food: '🍱',
+  fruit: '🍎', vegetable: '🥦', plant: '🌿', flower: '🌸', car: '🚗', default: '📦'
+};
+function getEmoji(label) {
+  const l = label.toLowerCase();
+  for (const [k, v] of Object.entries(EMOJIS)) if (l.includes(k)) return v;
+  return EMOJIS.default;
+}
+
+// ===== AUTH GUARD =====
+(async function init() {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentUser = data.session.user;
+  const name = currentUser.user_metadata?.full_name || currentUser.email;
+  document.getElementById('userName').textContent = name;
+  document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+  loadHistory();
+})();
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  window.location.href = 'login.html';
+});
+
+// ===== HISTORY =====
+async function loadHistory() {
+  const { data, error } = await supabase
+    .from('classifications')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false })
+    .limit(8);
+
+  const list = document.getElementById('historyList');
+  if (error || !data || data.length === 0) {
+    list.innerHTML = '<div class="history-empty">Your classification history will appear here once you analyse your first image.</div>';
+    return;
+  }
+
+  list.innerHTML = data.map(item => {
+    const time = new Date(item.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="history-item">
+        <div class="h-icon">${getEmoji(item.label)}</div>
+        <div class="h-text">
+          <div class="h-label">${item.label}</div>
+          <div class="h-time">${time}</div>
+        </div>
+        <div class="h-conf">${item.confidence}%</div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function saveToHistory(result) {
+  await supabase.from('classifications').insert({
+    user_id: currentUser.id,
+    label: result.top_label,
+    category: result.category,
+    confidence: result.confidence,
+    description: result.description
+  });
+  loadHistory();
+}
+
+// ===== UPLOAD / CLASSIFY (same logic as before) =====
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const previewArea = document.getElementById('previewArea');
+const previewImg = document.getElementById('previewImg');
+const imgName = document.getElementById('imgName');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const clearBtn = document.getElementById('clearBtn');
+const resultsArea = document.getElementById('resultsArea');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const resultContent = document.getElementById('resultContent');
+const errorBox = document.getElementById('errorBox');
+const loadingStep = document.getElementById('loadingStep');
+
+let currentFile = null;
+let currentBase64 = null;
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) loadFile(file);
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+clearBtn.addEventListener('click', () => {
+  currentFile = null; currentBase64 = null;
+  previewImg.src = ''; fileInput.value = '';
+  previewArea.classList.remove('visible');
+  resultsArea.classList.remove('visible');
+  errorBox.classList.remove('visible');
+  resultContent.style.display = 'none';
+  loadingOverlay.classList.remove('visible');
+});
+
+function loadFile(file) {
+  currentFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    previewImg.src = dataUrl;
+    imgName.textContent = file.name;
+    previewArea.classList.add('visible');
+    resultsArea.classList.remove('visible');
+    errorBox.classList.remove('visible');
+    currentBase64 = dataUrl.split(',')[1];
+  };
+  reader.readAsDataURL(file);
+}
+
+analyzeBtn.addEventListener('click', analyzeImage);
+
+async function analyzeImage() {
+  if (!currentBase64) return;
+
+  analyzeBtn.disabled = true;
+  resultsArea.classList.add('visible');
+  loadingOverlay.classList.add('visible');
+  resultContent.style.display = 'none';
+  errorBox.classList.remove('visible');
+
+  const steps = ['Preprocessing image...', 'Extracting features...', 'Running classifier...', 'Computing confidence scores...'];
+  let stepIdx = 0;
+  const stepInterval = setInterval(() => {
+    stepIdx = (stepIdx + 1) % steps.length;
+    loadingStep.textContent = steps[stepIdx];
+  }, 900);
+
+  try {
+    const mediaType = currentFile.type || 'image/jpeg';
+
+    const response = await fetch('/api/classify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: currentBase64, mediaType })
+    });
+
+    clearInterval(stepInterval);
+    const result = await response.json();
+
+    if (!response.ok) throw new Error(result.error || 'API request failed');
+
+    renderResult(result);
+    saveToHistory(result);
+
+  } catch (err) {
+    clearInterval(stepInterval);
+    loadingOverlay.classList.remove('visible');
+    resultsArea.classList.remove('visible');
+    errorBox.textContent = '⚠ ' + (err.message || 'An error occurred. Please try again.');
+    errorBox.classList.add('visible');
+  } finally {
+    analyzeBtn.disabled = false;
+  }
+}
+
+function renderResult(result) {
+  loadingOverlay.classList.remove('visible');
+  resultContent.style.display = 'block';
+
+  document.getElementById('objectIcon').textContent = getEmoji(result.top_label);
+  document.getElementById('topLabel').textContent = result.top_label;
+  document.getElementById('topCategory').textContent = result.category;
+  document.getElementById('topConfidence').textContent = result.confidence + '%';
+  document.getElementById('descriptionText').textContent = result.description;
+
+  const container = document.getElementById('predictionsContainer');
+  container.innerHTML = '<h5>Top predictions</h5>';
+
+  (result.predictions || []).forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'pred-row';
+    row.innerHTML = `
+      <span class="pred-label">${p.label}</span>
+      <div class="pred-bar-wrap"><div class="pred-bar" style="width: 0%"></div></div>
+      <span class="pred-pct">${p.confidence}%</span>
+    `;
+    container.appendChild(row);
+    setTimeout(() => { row.querySelector('.pred-bar').style.width = p.confidence + '%'; }, 80);
+  });
+}
+</script>
+
+</body>
+</html>

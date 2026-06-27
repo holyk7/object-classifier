@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lens — Everyday Object Recognition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --paper: #FAF8F4;
+    --ink: #1C1B1A;
+    --sienna: #C75D3D;
+    --sienna-deep: #A8472E;
+    --slate: #6B7280;
+    --border: #E8E2D5;
+    --card: #FFFFFF;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: rgba(250, 248, 244, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: var(--ink);
+  }
+  .brand-mark { width: 26px; height: 26px; position: relative; }
+  .brand-mark::before, .brand-mark::after {
+    content: ''; position: absolute; border: 2px solid var(--ink);
+  }
+  .brand-mark::before { width: 10px; height: 10px; top: 0; left: 0; border-right: none; border-bottom: none; }
+  .brand-mark::after { width: 10px; height: 10px; bottom: 0; right: 0; border-left: none; border-top: none; }
+  .brand span { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; }
+
+  .nav-links {
+    display: flex; align-items: center; gap: 2rem;
+  }
+  .nav-links a {
+    color: var(--ink); text-decoration: none; font-size: 14px; font-weight: 500;
+  }
+  .nav-links a.muted { color: var(--slate); }
+
+  .btn-nav {
+    background: var(--ink); color: var(--paper);
+    padding: 9px 20px; border-radius: 3px;
+    font-size: 14px; font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .btn-nav:hover { background: var(--sienna-deep); }
+
+  /* ===== HERO ===== */
+  .hero {
+    padding: 11rem 3rem 6rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--sienna-deep);
+    letter-spacing: 0.04em;
+    margin-bottom: 1.5rem;
+    border: 1px solid #E8B4A4;
+    background: #FDF1EE;
+    padding: 5px 12px;
+    border-radius: 20px;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--sienna);
+  }
+
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(42px, 6.5vw, 76px);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    max-width: 880px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--sienna);
+    font-weight: 500;
+  }
+
+  .hero p.lede {
+    font-size: 17px;
+    color: var(--slate);
+    max-width: 480px;
+    margin-top: 1.5rem;
+    line-height: 1.65;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 14px;
+    margin-top: 2.25rem;
+  }
+
+  .btn-cta {
+    background: var(--ink); color: var(--paper);
+    padding: 13px 26px; border-radius: 3px;
+    font-size: 14.5px; font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s, transform 0.15s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-cta:hover { background: var(--sienna-deep); transform: translateY(-1px); }
+
+  .btn-secondary {
+    border: 1.5px solid var(--border);
+    color: var(--ink);
+    padding: 13px 26px; border-radius: 3px;
+    font-size: 14.5px; font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--ink); }
+
+  /* Viewfinder hero visual */
+  .viewfinder {
+    margin-top: 4rem;
+    position: relative;
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: 4px;
+    padding: 2px;
+    max-width: 720px;
+  }
+
+  .viewfinder-inner {
+    position: relative;
+    aspect-ratio: 16/7;
+    background: linear-gradient(135deg, #F0EBE0 0%, #E8E2D5 100%);
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .vf-corner {
+    position: absolute;
+    width: 32px; height: 32px;
+    border: 2.5px solid var(--sienna);
+  }
+  .vf-corner.tl { top: 18px; left: 18px; border-right: none; border-bottom: none; }
+  .vf-corner.tr { top: 18px; right: 18px; border-left: none; border-bottom: none; }
+  .vf-corner.bl { bottom: 18px; left: 18px; border-right: none; border-top: none; }
+  .vf-corner.br { bottom: 18px; right: 18px; border-left: none; border-top: none; }
+
+  .vf-tag {
+    position: absolute;
+    top: 18px; left: 60px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--sienna-deep);
+    background: rgba(250,248,244,0.9);
+    padding: 4px 10px;
+    border-radius: 2px;
+  }
+
+  .vf-result {
+    text-align: center;
+  }
+  .vf-result .icon { font-size: 40px; margin-bottom: 10px; }
+  .vf-result .label {
+    font-family: 'Fraunces', serif;
+    font-size: 22px; font-weight: 500;
+    text-transform: capitalize;
+  }
+  .vf-result .confidence {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--sienna-deep);
+    margin-top: 4px;
+  }
+
+  /* ===== SECTION: HOW IT WORKS ===== */
+  .section {
+    padding: 5rem 3rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--sienna-deep);
+    letter-spacing: 0.06em;
+    margin-bottom: 0.75rem;
+  }
+
+  .section h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(28px, 3.5vw, 38px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    max-width: 600px;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+
+  .step-card {
+    border-top: 2px solid var(--ink);
+    padding-top: 1.25rem;
+  }
+
+  .step-card .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--sienna);
+    margin-bottom: 0.75rem;
+  }
+
+  .step-card h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+
+  .step-card p {
+    font-size: 14px;
+    color: var(--slate);
+    line-height: 1.6;
+  }
+
+  /* ===== SECTION: CLASSES ===== */
+  .classes-section {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 5rem 3rem;
+  }
+
+  .classes-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .classes-section .section-label { color: #E89478; }
+
+  .classes-section h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(28px, 3.5vw, 38px);
+    font-weight: 500;
+    color: var(--paper);
+    max-width: 600px;
+  }
+
+  .class-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1px;
+    margin-top: 3rem;
+    border: 1px solid #3A3836;
+  }
+
+  .class-chip {
+    background: #232220;
+    padding: 1.25rem 1rem;
+    border: 1px solid #3A3836;
+    margin: -1px 0 0 -1px;
+    text-align: center;
+    transition: background 0.15s;
+  }
+  .class-chip:hover { background: #2D2B28; }
+
+  .class-chip .emoji { font-size: 22px; margin-bottom: 6px; display: block; }
+  .class-chip .name { font-size: 12.5px; color: #C9C4B6; }
+
+  /* ===== FOOTER ===== */
+  footer {
+    padding: 3rem 3rem 2.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+
+  footer .f-brand {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: var(--ink);
+  }
+
+  footer .f-meta {
+    font-size: 12.5px;
+    color: var(--slate);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 1.1rem 1.5rem; }
+    .nav-links { gap: 1rem; }
+    .nav-links a.muted { display: none; }
+    .hero { padding: 8.5rem 1.5rem 4rem; }
+    .hero-actions { flex-direction: column; }
+    .btn-cta, .btn-secondary { text-align: center; justify-content: center; }
+    .section { padding: 3.5rem 1.5rem; }
+    .steps { grid-template-columns: 1fr; gap: 2rem; }
+    .classes-section { padding: 3.5rem 1.5rem; }
+    footer { flex-direction: column; gap: 1rem; align-items: flex-start; padding: 2.5rem 1.5rem; }
+    footer .f-meta { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="brand">
+    <div class="brand-mark"></div>
+    <span>Lens</span>
+  </a>
+  <div class="nav-links">
+    <a href="#how" class="muted">How it works</a>
+    <a href="#classes" class="muted">Object classes</a>
+    <a href="login.html">Sign in</a>
+    <a href="signup.html" class="btn-nav">Get started</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="eyebrow"><span class="dot"></span> Built on MobileNetV2 transfer learning</div>
+  <h1>Point your camera at <em>anything</em>.<br>Know what it is, instantly.</h1>
+  <p class="lede">Lens identifies everyday objects from a single photo — bottles, books, keys, chairs — and tells you exactly how confident it is. No guesswork, just signal.</p>
+
+  <div class="hero-actions">
+    <a href="signup.html" class="btn-cta">Start classifying →</a>
+    <a href="login.html" class="btn-secondary">Sign in</a>
+  </div>
+
+  <div class="viewfinder">
+    <div class="viewfinder-inner">
+      <div class="vf-corner tl"></div>
+      <div class="vf-corner tr"></div>
+      <div class="vf-corner bl"></div>
+      <div class="vf-corner br"></div>
+      <div class="vf-tag">ANALYSING</div>
+      <div class="vf-result">
+        <div class="icon">🍶</div>
+        <div class="label">Bottle</div>
+        <div class="confidence">94.2% confidence</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="section-label">PROCESS</div>
+  <h2>From photo to prediction in three steps</h2>
+
+  <div class="steps">
+    <div class="step-card">
+      <div class="num">01 — UPLOAD</div>
+      <h3>Drop in a photo</h3>
+      <p>Drag and drop, or select an image of any everyday object from your device.</p>
+    </div>
+    <div class="step-card">
+      <div class="num">02 — CLASSIFY</div>
+      <h3>The model gets to work</h3>
+      <p>A MobileNetV2-based classifier extracts features and ranks likely matches.</p>
+    </div>
+    <div class="step-card">
+      <div class="num">03 — REVIEW</div>
+      <h3>See the breakdown</h3>
+      <p>Get the top prediction, confidence score, and a ranked list of alternatives.</p>
+    </div>
+  </div>
+</section>
+
+<section class="classes-section" id="classes">
+  <div class="classes-inner">
+    <div class="section-label">RECOGNISED OBJECTS</div>
+    <h2>Trained to recognise everyday items</h2>
+
+    <div class="class-grid" id="classGrid"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-brand">Lens</div>
+  <div class="f-meta">
+    Final Year Project · Adenubi Patrick (DE.2022/7457)<br>
+    Supervisor: Dr. S. T. Whyte
+  </div>
+</footer>
+
+<script>
+const CLASSES = [
+  { emoji: '🍶', name: 'Bottle' },
+  { emoji: '☕', name: 'Cup / Mug' },
+  { emoji: '📱', name: 'Phone' },
+  { emoji: '🪑', name: 'Chair' },
+  { emoji: '👜', name: 'Bag' },
+  { emoji: '📖', name: 'Book' },
+  { emoji: '🔑', name: 'Keys' },
+  { emoji: '🥣', name: 'Bowl' },
+  { emoji: '👟', name: 'Shoe' },
+  { emoji: '✏️', name: 'Pen / Pencil' },
+  { emoji: '🍽️', name: 'Plate' },
+  { emoji: '💻', name: 'Laptop' },
+];
+
+const grid = document.getElementById('classGrid');
+CLASSES.forEach(c => {
+  const chip = document.createElement('div');
+  chip.className = 'class-chip';
+  chip.innerHTML = `<span class="emoji">${c.emoji}</span><span class="name">${c.name}</span>`;
+  grid.appendChild(chip);
+});
+</script>
+
+</body>
+</html>

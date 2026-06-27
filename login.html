@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — Lens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --paper: #FAF8F4;
+    --ink: #1C1B1A;
+    --sienna: #C75D3D;
+    --sienna-deep: #A8472E;
+    --slate: #6B7280;
+    --border: #E8E2D5;
+    --card: #FFFFFF;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Ambient corner brackets - signature motif */
+  .bracket {
+    position: fixed;
+    width: 28px; height: 28px;
+    border: 2px solid var(--sienna);
+    opacity: 0.35;
+  }
+  .bracket.tl { top: 32px; left: 32px; border-right: none; border-bottom: none; }
+  .bracket.br { bottom: 32px; right: 32px; border-left: none; border-top: none; }
+
+  .wrap {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .brand-mark {
+    width: 30px; height: 30px;
+    position: relative;
+  }
+  .brand-mark::before, .brand-mark::after {
+    content: '';
+    position: absolute;
+    border: 2px solid var(--ink);
+  }
+  .brand-mark::before {
+    width: 12px; height: 12px;
+    top: 0; left: 0;
+    border-right: none; border-bottom: none;
+  }
+  .brand-mark::after {
+    width: 12px; height: 12px;
+    bottom: 0; right: 0;
+    border-left: none; border-top: none;
+  }
+
+  .brand span {
+    font-family: 'Fraunces', serif;
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2.75rem 2.25rem;
+  }
+
+  .card h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .card .sub {
+    font-size: 13.5px;
+    color: var(--slate);
+    margin-bottom: 1.75rem;
+    line-height: 1.5;
+  }
+
+  .field {
+    margin-bottom: 1.1rem;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    background: var(--paper);
+    color: var(--ink);
+    transition: border-color 0.15s;
+  }
+
+  .field input:focus {
+    outline: none;
+    border-color: var(--sienna);
+  }
+
+  .field input::placeholder { color: #B5AFA0; }
+
+  .error-msg {
+    display: none;
+    background: #FDF1EE;
+    border: 1px solid #E8B4A4;
+    border-radius: 3px;
+    padding: 10px 13px;
+    font-size: 13px;
+    color: var(--sienna-deep);
+    margin-bottom: 1.1rem;
+  }
+  .error-msg.visible { display: block; }
+
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-top: 0.5rem;
+  }
+
+  .btn-primary:hover { background: var(--sienna-deep); }
+  .btn-primary:disabled { background: #BFBAAE; cursor: not-allowed; }
+
+  .divider-row {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 13.5px;
+    color: var(--slate);
+  }
+
+  .divider-row a {
+    color: var(--sienna);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .divider-row a:hover { text-decoration: underline; }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 1.75rem;
+    font-size: 13px;
+    color: var(--slate);
+    text-decoration: none;
+  }
+  .back-link:hover { color: var(--ink); }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid #ffffff40;
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="bracket tl"></div>
+<div class="bracket br"></div>
+
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <span>Lens</span>
+  </div>
+
+  <div class="card">
+    <h1>Welcome back</h1>
+    <p class="sub">Sign in to access your classification history and continue your work.</p>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-primary" id="submitBtn">Sign in</button>
+    </form>
+
+    <div class="divider-row">
+      Don't have an account? <a href="signup.html">Create one</a>
+    </div>
+  </div>
+
+  <a href="index.html" class="back-link">← Back to home</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const form = document.getElementById('loginForm');
+const errorMsg = document.getElementById('errorMsg');
+const submitBtn = document.getElementById('submitBtn');
+
+// If already logged in, go straight to the app
+supabase.auth.getSession().then(({ data }) => {
+  if (data.session) window.location.href = 'app.html';
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errorMsg.classList.remove('visible');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner"></span> Signing in...';
+
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    errorMsg.textContent = error.message === 'Invalid login credentials'
+      ? 'Incorrect email or password. Please try again.'
+      : error.message;
+    errorMsg.classList.add('visible');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Sign in';
+    return;
+  }
+
+  window.location.href = 'app.html';
+});
+</script>
+
+</body>
+</html>
