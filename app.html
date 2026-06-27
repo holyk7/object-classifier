@@ -26,7 +26,6 @@
     min-height: 100vh;
   }
 
-  /* ===== NAV ===== */
   nav {
     display: flex; align-items: center; justify-content: space-between;
     padding: 1.2rem 2.5rem;
@@ -70,7 +69,6 @@
   }
   .btn-logout:hover { border-color: var(--sienna); color: var(--sienna-deep); }
 
-  /* ===== LAYOUT ===== */
   .layout {
     display: grid;
     grid-template-columns: 1fr 320px;
@@ -93,7 +91,6 @@
     font-size: 28px; font-weight: 500; letter-spacing: -0.01em;
   }
 
-  /* ===== UPLOAD ZONE ===== */
   .upload-zone {
     border: 1.5px dashed var(--border);
     border-radius: 4px;
@@ -145,7 +142,6 @@
     font-size: 10.5px; color: var(--slate);
   }
 
-  /* ===== PREVIEW ===== */
   .preview-area { display: none; margin-top: 1.5rem; }
   .preview-area.visible { display: block; }
 
@@ -197,7 +193,6 @@
   .btn.danger { background: transparent; border-color: var(--border); color: var(--sienna-deep); }
   .btn.danger:hover { border-color: var(--sienna); }
 
-  /* ===== RESULTS ===== */
   .results-area { display: none; margin-top: 1.5rem; }
   .results-area.visible { display: block; }
 
@@ -263,7 +258,6 @@
   }
   .error-box.visible { display: block; }
 
-  /* ===== SIDEBAR: HISTORY ===== */
   .sidebar {
     border-left: 1px solid var(--border);
     padding-left: 2.5rem;
@@ -346,265 +340,3 @@
           <div class="vf-corner bl"></div><div class="vf-corner br"></div>
           <img id="previewImg" src="" alt="Preview">
         </div>
-        <div class="preview-controls">
-          <span class="img-name" id="imgName">image.jpg</span>
-          <div class="btn-row">
-            <button class="btn danger" id="clearBtn">Clear</button>
-            <button class="btn primary" id="analyzeBtn">Analyse image</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="error-box" id="errorBox"></div>
-
-    <div class="results-area" id="resultsArea">
-      <div class="result-card">
-        <div id="loadingOverlay" class="loading-overlay visible">
-          <div class="spinner"></div>
-          <p>Analysing image...</p>
-          <div class="step" id="loadingStep">Sending to classifier</div>
-        </div>
-
-        <div id="resultContent" style="display:none;">
-          <div class="result-header">
-            <div class="status-dot"></div>
-            <h4>Classification result</h4>
-            <span class="model-tag">MobileNetV2 · Transfer Learning</span>
-          </div>
-
-          <div class="primary-result">
-            <div class="object-icon" id="objectIcon">📦</div>
-            <div class="object-info">
-              <h3 id="topLabel">Object</h3>
-              <p id="topCategory">Everyday object detected</p>
-            </div>
-            <div class="confidence-pill" id="topConfidence">—%</div>
-          </div>
-
-          <div class="top-predictions" id="predictionsContainer"></div>
-
-          <div class="description-section">
-            <h5>Analysis</h5>
-            <p id="descriptionText">—</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="sidebar">
-    <h2>Recent activity</h2>
-    <div id="historyList">
-      <div class="history-empty">Your classification history will appear here once you analyse your first image.</div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
-<script>
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let currentUser = null;
-
-const EMOJIS = {
-  bottle: '🍶', cup: '☕', mug: '☕', phone: '📱', mobile: '📱', smartphone: '📱',
-  chair: '🪑', bag: '👜', backpack: '🎒', book: '📖', keys: '🔑', key: '🔑',
-  bowl: '🥣', shoe: '👟', sneaker: '👟', pen: '✏️', pencil: '✏️', plate: '🍽️',
-  laptop: '💻', computer: '💻', table: '🪵', desk: '🪵', clock: '🕐', watch: '⌚',
-  glasses: '👓', headphones: '🎧', remote: '📺', fan: '💨', food: '🍱',
-  fruit: '🍎', vegetable: '🥦', plant: '🌿', flower: '🌸', car: '🚗', default: '📦'
-};
-function getEmoji(label) {
-  const l = label.toLowerCase();
-  for (const [k, v] of Object.entries(EMOJIS)) if (l.includes(k)) return v;
-  return EMOJIS.default;
-}
-
-// ===== AUTH GUARD =====
-(async function init() {
-  const { data } = await supabase.auth.getSession();
-  if (!data.session) {
-    window.location.href = 'login.html';
-    return;
-  }
-  currentUser = data.session.user;
-  const name = currentUser.user_metadata?.full_name || currentUser.email;
-  document.getElementById('userName').textContent = name;
-  document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
-  loadHistory();
-})();
-
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  await supabase.auth.signOut();
-  window.location.href = 'login.html';
-});
-
-// ===== HISTORY =====
-async function loadHistory() {
-  const { data, error } = await supabase
-    .from('classifications')
-    .select('*')
-    .eq('user_id', currentUser.id)
-    .order('created_at', { ascending: false })
-    .limit(8);
-
-  const list = document.getElementById('historyList');
-  if (error || !data || data.length === 0) {
-    list.innerHTML = '<div class="history-empty">Your classification history will appear here once you analyse your first image.</div>';
-    return;
-  }
-
-  list.innerHTML = data.map(item => {
-    const time = new Date(item.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-    return `
-      <div class="history-item">
-        <div class="h-icon">${getEmoji(item.label)}</div>
-        <div class="h-text">
-          <div class="h-label">${item.label}</div>
-          <div class="h-time">${time}</div>
-        </div>
-        <div class="h-conf">${item.confidence}%</div>
-      </div>
-    `;
-  }).join('');
-}
-
-async function saveToHistory(result) {
-  await supabase.from('classifications').insert({
-    user_id: currentUser.id,
-    label: result.top_label,
-    category: result.category,
-    confidence: result.confidence,
-    description: result.description
-  });
-  loadHistory();
-}
-
-// ===== UPLOAD / CLASSIFY (same logic as before) =====
-const fileInput = document.getElementById('fileInput');
-const uploadZone = document.getElementById('uploadZone');
-const previewArea = document.getElementById('previewArea');
-const previewImg = document.getElementById('previewImg');
-const imgName = document.getElementById('imgName');
-const analyzeBtn = document.getElementById('analyzeBtn');
-const clearBtn = document.getElementById('clearBtn');
-const resultsArea = document.getElementById('resultsArea');
-const loadingOverlay = document.getElementById('loadingOverlay');
-const resultContent = document.getElementById('resultContent');
-const errorBox = document.getElementById('errorBox');
-const loadingStep = document.getElementById('loadingStep');
-
-let currentFile = null;
-let currentBase64 = null;
-
-uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
-uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-uploadZone.addEventListener('drop', e => {
-  e.preventDefault();
-  uploadZone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) loadFile(file);
-});
-fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
-
-clearBtn.addEventListener('click', () => {
-  currentFile = null; currentBase64 = null;
-  previewImg.src = ''; fileInput.value = '';
-  previewArea.classList.remove('visible');
-  resultsArea.classList.remove('visible');
-  errorBox.classList.remove('visible');
-  resultContent.style.display = 'none';
-  loadingOverlay.classList.remove('visible');
-});
-
-function loadFile(file) {
-  currentFile = file;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const dataUrl = e.target.result;
-    previewImg.src = dataUrl;
-    imgName.textContent = file.name;
-    previewArea.classList.add('visible');
-    resultsArea.classList.remove('visible');
-    errorBox.classList.remove('visible');
-    currentBase64 = dataUrl.split(',')[1];
-  };
-  reader.readAsDataURL(file);
-}
-
-analyzeBtn.addEventListener('click', analyzeImage);
-
-async function analyzeImage() {
-  if (!currentBase64) return;
-
-  analyzeBtn.disabled = true;
-  resultsArea.classList.add('visible');
-  loadingOverlay.classList.add('visible');
-  resultContent.style.display = 'none';
-  errorBox.classList.remove('visible');
-
-  const steps = ['Preprocessing image...', 'Extracting features...', 'Running classifier...', 'Computing confidence scores...'];
-  let stepIdx = 0;
-  const stepInterval = setInterval(() => {
-    stepIdx = (stepIdx + 1) % steps.length;
-    loadingStep.textContent = steps[stepIdx];
-  }, 900);
-
-  try {
-    const mediaType = currentFile.type || 'image/jpeg';
-
-    const response = await fetch('/api/classify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64: currentBase64, mediaType })
-    });
-
-    clearInterval(stepInterval);
-    const result = await response.json();
-
-    if (!response.ok) throw new Error(result.error || 'API request failed');
-
-    renderResult(result);
-    saveToHistory(result);
-
-  } catch (err) {
-    clearInterval(stepInterval);
-    loadingOverlay.classList.remove('visible');
-    resultsArea.classList.remove('visible');
-    errorBox.textContent = '⚠ ' + (err.message || 'An error occurred. Please try again.');
-    errorBox.classList.add('visible');
-  } finally {
-    analyzeBtn.disabled = false;
-  }
-}
-
-function renderResult(result) {
-  loadingOverlay.classList.remove('visible');
-  resultContent.style.display = 'block';
-
-  document.getElementById('objectIcon').textContent = getEmoji(result.top_label);
-  document.getElementById('topLabel').textContent = result.top_label;
-  document.getElementById('topCategory').textContent = result.category;
-  document.getElementById('topConfidence').textContent = result.confidence + '%';
-  document.getElementById('descriptionText').textContent = result.description;
-
-  const container = document.getElementById('predictionsContainer');
-  container.innerHTML = '<h5>Top predictions</h5>';
-
-  (result.predictions || []).forEach(p => {
-    const row = document.createElement('div');
-    row.className = 'pred-row';
-    row.innerHTML = `
-      <span class="pred-label">${p.label}</span>
-      <div class="pred-bar-wrap"><div class="pred-bar" style="width: 0%"></div></div>
-      <span class="pred-pct">${p.confidence}%</span>
-    `;
-    container.appendChild(row);
-    setTimeout(() => { row.querySelector('.pred-bar').style.width = p.confidence + '%'; }, 80);
-  });
-}
-</script>
-
-</body>
-</html>
